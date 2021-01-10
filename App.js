@@ -10,120 +10,89 @@ import {
 } from 'react-native';
 import RNCalendarEvents from 'react-native-calendar-events';
 
-let calendarID = "";
-let calendarTitle = "";
-let calendarType = "";
-let calendarSource = "";
-let calendarAllowsModification = false;
-let primaryCalendarFound = false;
-let selectedCalendar;
+const eventTitle = "My Super Sweet Calendar Event!";
+const startDate = "2021-01-31T13:15:00.000Z";
+const endDate = "2021-01-31T13:45:00.000Z";
 
 class App extends React.Component {
   constructor(props) {
     super(props);
   }
 
-  addToCalendar() {
-    RNCalendarEvents.checkPermissions((readOnly = false))
-      .then( (result) => {
-        switch (result) {
-          case "undetermined":
-            RNCalendarEvents.requestPermissions((readOnly = false))
-              .then( (result) => {
-                if (result === "authorized") {
-                  RNCalendarEvents.findCalendars()
-                    .then( (result) => {
-                      const calendars = result;
-                      calendars.forEach( (calendar) => {
-                        if (calendar.isPrimary) {
-                          calendarID = calendar.id;
-                          calendarTitle = calendar.title;
-                          calendarType = calendar.type;
-                          calendarSource = calendar.source;
-                          calendarAllowsModification = calendar.allowsModifications;
-                          primaryCalendarFound = true;
-                          selectedCalendar = calendar;
-                          return;
-                        }
-                      });
-                      if (primaryCalendarFound) {
-                        const eventTitle = "ReactNative Calendar Tech Talk";
-                        const startDate = "2021-01-10T13:15:00.000Z";
-                        const endDate = "2021-01-10T13:45:00.000Z";
-                        const calendarId = selectedCalendar.id;
-                        const eventDetails = { startDate, endDate, calendarId};
-                        const options = {}; // no options
-                        RNCalendarEvents.saveEvent(eventTitle, eventDetails)
-                          .then( (result) => {
-                            alert("Event Saved To Calendar! EVENT ID: " + result.toString());
-                          })
-                          .catch( (error) => {
-                            alert("ERROR: UNABLE TO SAVE EVENT TO CALENDAR. PLEASE ADD EVENT TO CALENDAR MANUALLY");
-                          });
-
-                      }
-                    })
-                    .catch((error) => {
-                      alert("ERROR: NO CALENDARS FOUND ON DEVICE");
-                    })
-                } else {
-                  alert("UNABLE TO ADD EVENT TO CALENDAR: CALENDAR ACCESS DENIED");
-                }
-              })
-              .catch((error) => {
-                alert(JSON.stringify(error));
-              });
-            break;
-          case "authorized":
-            RNCalendarEvents.findCalendars()
-            .then( (result) => {
-              const calendars = result;
-              calendars.forEach( (calendar) => {
-                if (calendar.isPrimary) {
-                  calendarID = calendar.id;
-                  calendarTitle = calendar.title;
-                  calendarType = calendar.type;
-                  calendarSource = calendar.source;
-                  calendarAllowsModification = calendar.allowsModifications;
-                  primaryCalendarFound = true;
-                  selectedCalendar = calendar;
-                  return;
-                }
-              });
-              if (primaryCalendarFound) {
-                const eventTitle = "ReactNative Calendar Tech Talk";
-                const startDate = "2021-01-10T13:15:00.000Z";
-                const endDate = "2021-01-10T13:45:00.000Z";
-                const calendarId = selectedCalendar.id;
-                const eventDetails = { startDate, endDate, calendarId};
-                const options = {}; // no options
-                RNCalendarEvents.saveEvent(eventTitle, eventDetails)
-                  .then( (result) => {
-                    alert("Event Saved To Calendar! EVENT ID: " + result.toString());
-                  })
-                  .catch( (error) => {
-                    alert("ERROR: UNABLE TO SAVE EVENT TO CALENDAR. PLEASE ADD EVENT TO CALENDAR MANUALLY");
-                  });
-
-              }
-            })
-            .catch((error) => {
-              alert("ERROR: NO CALENDARS FOUND ON DEVICE");
-            })
-            break;
-          case "restricted":
-            alert("RESULT: RESTRICTED");
-            break;
-          case "denied":
-            alert("RESULT: DENIED");
-            break;
-          default:
-            alert("RESULT: UNKNOWN");
+  async checkPermissions() {
+    let hasPermissionToAccessCalendar = false
+    await RNCalendarEvents.checkPermissions((readOnly = false))
+      .then((result) => {
+        if (result === "authorized") {
+          hasPermissionToAccessCalendar = true;
+        } else {
+          hasPermissionToAccessCalendar = false;
         }
       })
-      .catch( (error) => {
-        alert(JSON.stringify(error));
+      .catch((error) => {
+        hasPermissionToAccessCalendar = false;
       });
+    return hasPermissionToAccessCalendar;
+  }
+
+  async requestPermissionToAccessCalendar() {
+    let permissionToAccessCalendarGranted = false;
+    await RNCalendarEvents.requestPermissions((readOnly = false))
+      .then((result) => {
+        if (result === "authorized") {
+          permissionToAccessCalendarGranted = true;
+        } else {
+          permissionToAccessCalendarGranted = false;
+        }
+      })
+      .catch((error) => {
+        permissionToAccessCalendarGranted = false;
+      });
+    return permissionToAccessCalendarGranted;
+  }
+
+  async saveEventToCalendar(eventTitle, startDate, endDate) {
+    RNCalendarEvents.findCalendars()
+      .then( (result) => {
+        const calendars = result;
+        let primaryCalendar;
+        calendars.forEach( (calendar) => {
+          if (calendar.isPrimary) {
+            primaryCalendar = calendar;
+          }
+        });
+        if (typeof primaryCalendar !== 'undefined') {
+          const calendarId = primaryCalendar.id;
+          const eventDetails = {startDate, endDate, calendarId};
+          const options = {}; // no options
+          RNCalendarEvents.saveEvent(eventTitle, eventDetails)
+            .then( (result) => {
+              alert("Event Saved To Calendar! EVENT ID: " + result.toString());
+            })
+            .catch( (error) => {
+              alert("ERROR: UNABLE TO SAVE EVENT TO CALENDAR. PLEASE ADD EVENT TO CALENDAR MANUALLY");
+            });
+        }
+      })
+      .catch((error) => {
+        alert("ERROR: NO CALENDARS FOUND ON DEVICE");
+      })
+  }
+
+  async addToCalendar(eventTitle, startDate, endDate) {
+    
+    let hasPermissionToAccessCalendar = await this.checkPermissions();
+
+    if (!hasPermissionToAccessCalendar) {
+      const permissionToAccessCalendarGranted = await this.requestPermissionToAccessCalendar();
+      if (permissionToAccessCalendarGranted) {
+        hasPermissionToAccessCalendar = true;
+      }
+    }
+
+    if (hasPermissionToAccessCalendar) {
+      this.saveEventToCalendar(eventTitle, startDate, endDate);
+    }
   }
 
   render() {
@@ -132,7 +101,7 @@ class App extends React.Component {
         <Text>RNCalendarApp</Text>
         <Button 
           title="Add to Calendar"
-          onPress={ () => this.addToCalendar() } />
+          onPress={ () => this.addToCalendar(eventTitle, startDate, endDate) } />
       </SafeAreaView>
     );
   }
