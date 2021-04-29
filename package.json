@@ -10,6 +10,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "moment-timezone": "^0.5.33",
     "react": "16.13.1",
     "react-native": "0.63.4",
     "react-native-calendar-events": "^2.2.0"

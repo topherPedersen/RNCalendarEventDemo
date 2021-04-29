@@ -10,9 +10,15 @@ import {
 } from 'react-native';
 import RNCalendarEvents from 'react-native-calendar-events';
 
-const eventTitle = "My Super Sweet Calendar Event!";
-const startDate = "2021-01-31T13:15:00.000Z";
-const endDate = "2021-01-31T13:45:00.000Z";
+// TODO: Install MomentJS
+
+// Example UTC Time (Greenwich England): 2021-04-29T21:01:28+0000
+
+const eventTitle = "New and Improved Calendar Event!";
+// const startDate = "2021-04-30T13:15:00.000Z";
+// const endDate = "2021-04-30T13:45:00.000Z";
+const startDate = "2021-04-30T13:15:00.000Z";
+const endDate = "2021-04-30T13:45:00.000Z";
 
 class App extends React.Component {
   constructor(props) {
